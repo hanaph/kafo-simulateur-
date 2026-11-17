@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kafo : l'assurance de la tontine</title>
+<meta name="description" content="Simulateur interactif du mémoire Kafo Protocol : assurance mutualisée des tontines rotatives. Calcul exact, sans connexion ni serveur.">
+<meta name="author" content="Hanaphiou Deen Diallo">
+<meta name="theme-color" content="#1f6f4a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%231f6f4a'/%3E%3Ccircle cx='32' cy='32' r='12' fill='none' stroke='%23c8902e' stroke-width='5'/%3E%3C/svg%3E">
+<style>
+:root {
+  --accent: #1f6f4a; --accent-soft: #e5f0e9; --gold: #c8902e; --ink: #1f2a24; --muted: #6b7266; --line: #e6e0d2;
+  --bg: #f7f4ec; --card: #ffffff; --good: #1f6f4a; --warn: #b7791f; --bad: #b4452f;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.45; }
+header { background: var(--accent); color: #fff; padding: 16px 24px 0; border-bottom: 4px solid var(--gold); }
+header h1 { margin: 0; font-size: 22px; font-weight: 650; }
+header p { margin: 4px 0 12px; font-size: 14px; opacity: .9; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { background: transparent; color: #d9eadf; border: 0; padding: 10px 16px; font-size: 14px; cursor: pointer; border-radius: 8px 8px 0 0; }
+.tab:hover { background: rgba(255,255,255,.12); }
+.tab.active { background: var(--bg); color: var(--accent); font-weight: 650; }
+main { max-width: 1280px; margin: 0 auto; padding: 18px 20px 40px; }
+.layout { display: grid; grid-template-columns: 310px 1fr; gap: 18px; align-items: start; }
+@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.controls { position: sticky; top: 10px; }
+@media (max-width: 960px) { .controls { position: static; } }
+.controls h2, .section-title { margin: 0 0 10px; font-size: 14px; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+.field { margin-bottom: 13px; }
+.field label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.field label span.val { font-weight: 500; color: var(--accent); }
+.field input[type=range] { width: 100%; accent-color: var(--accent); }
+.field input[type=number] { width: 100%; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 92px; gap: 8px; align-items: center; }
+.hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.radios { display: grid; gap: 6px; }
+.radios label { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; font-size: 13px; cursor: pointer; }
+.radios input { margin-top: 3px; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.preset { border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 5px 11px; font-size: 12px; cursor: pointer; }
+.preset:hover { background: var(--accent); color: #fff; }
+.sep { border: 0; border-top: 1px solid var(--line); margin: 14px 0; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+@media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.card .t { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+.card .v { font-size: 24px; font-weight: 700; margin: 2px 0; }
+.card .s { font-size: 12px; color: var(--muted); }
+.card.good .v { color: var(--good); } .card.warn .v { color: var(--warn); } .card.bad .v { color: var(--bad); }
+.charts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (max-width: 1100px) { .charts { grid-template-columns: 1fr; } }
+.chart { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 12px 8px; position: relative; }
+.chart h3 { margin: 0 0 2px; font-size: 14px; }
+.chart .sub { margin: 0 0 6px; font-size: 12px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; margin: 4px 4px 0; }
+.legend i { display: inline-block; width: 18px; height: 3px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.tip { position: absolute; pointer-events: none; background: rgba(17,24,39,.92); color: #fff; font-size: 12px; padding: 6px 9px; border-radius: 6px; white-space: nowrap; display: none; z-index: 5; }
+table.obj { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+table.obj th, table.obj td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: right; }
+table.obj th:first-child, table.obj td:first-child { text-align: left; }
+table.obj th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.note { font-size: 12.5px; color: var(--muted); background: #fff8e6; border: 1px solid #f3e1a8; border-radius: 8px; padding: 9px 12px; margin-top: 12px; }
+.help { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; max-width: 880px; }
+.help h2 { font-size: 16px; margin: 18px 0 6px; color: var(--accent); }
+.help h2:first-child { margin-top: 0; }
+.help p, .help li { font-size: 14px; }
+footer { font-size: 12px; color: var(--muted); text-align: center; padding: 14px; }
+[hidden] { display: none !important; }
+
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.brand h1 { font-size: 26px; letter-spacing: .02em; }
+.brand p { margin: 2px 0 0; font-size: 14px; }
+.field input[type=text], .pair input[type=text] { width: 100%; padding: 6px 8px; border: 1px solid #cbd5c8; border-radius: 6px; font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.chip { background: var(--accent-soft); border: 1px solid #c3dccb; border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 13px; }
+.chip button { border: 0; background: transparent; color: var(--bad); font-size: 16px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.scroll { overflow-x: auto; }
+.rowbad td { background: #f7ddd6; } .rowwarn td { background: #fbf0d6; }
+td.pos { color: var(--good); font-weight: 600; } td.neg { color: var(--bad); font-weight: 600; }
+.subt { margin: 16px 0 4px; font-size: 14px; }
+.inl { font-size: 13px; display: inline-flex; align-items: center; gap: 4px; }
+details.more { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+details.more > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--accent); }
+#cards details.more { margin-bottom: 14px; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 40 40" width="44" height="44" aria-hidden="true"><circle cx="14" cy="24" r="10" fill="#e9b949" opacity=".95"/><circle cx="26" cy="24" r="10" fill="#f7f4ec" opacity=".9"/><circle cx="20" cy="13" r="10" fill="#c8902e" opacity=".92"/></svg>
+    <div><h1>Kafo</h1><p>L'assurance de la tontine. <b id="hdr-nom">Ma tontine</b></p></div>
+  </div>
+  <nav>
+    <button class="tab active" data-tab="demo">Ma tontine</button>
+    <button class="tab" data-tab="fonds">Simulateur du fonds</button>
+    <button class="tab" data-tab="central">Gestionnaire centralisé et blockchain</button>
+    <button class="tab" data-tab="aide">Hypothèses et lecture</button>
+  </nav>
+</header>
+
+<main>
+<!-- ===================== ONGLET 1 ===================== -->
+<section id="tab-demo">
+  <div class="layout">
+    <aside class="panel controls">
+      <h2>Ma tontine</h2>
+      <div class="field"><label for="d-nom">Nom de la tontine</label><input type="text" id="d-nom" maxlength="40" value="Ma tontine"></div>
+      <div class="field"><label for="d-cot">Cotisation par tour (FCFA)</label><input type="number" id="d-cot" min="100" step="500" value="10000"></div>
+      <div class="field"><label for="d-prime">Prime d'assurance <span class="val" id="d-prime_v"></span></label><input type="range" id="d-prime" min="0" max="150" step="5" value="50"></div>
+      <hr class="sep">
+      <h2>Membres <span id="d-count" style="text-transform:none;letter-spacing:0"></span></h2>
+      <div class="pair" style="grid-template-columns:1fr auto"><input type="text" id="d-new" maxlength="30" placeholder="Prénom du membre"><button class="preset" id="d-add">Ajouter</button></div>
+      <div class="chips" id="d-list"></div>
+      <div class="presets"><button class="preset" id="d-exemple">Charger un exemple</button><button class="preset" id="d-clear">Tout effacer</button><button class="preset" id="d-export">Exporter</button><label class="preset" style="cursor:pointer">Importer<input type="file" id="d-import" accept=".json,application/json" hidden></label></div>
+      <div class="hint">La liste est enregistrée dans ce navigateur.</div>
+    </aside>
+    <div class="results">
+      <div class="panel">
+        <h2 class="section-title">Faire tourner un cycle</h2>
+        <div class="presets" style="margin-bottom:10px"><button class="preset" id="d-tirage">Tirer l'ordre au sort</button><span class="inl">Défauts au hasard <input type="number" id="d-proba" min="0" max="100" value="10" style="width:56px;padding:4px"> %</span><button class="preset" id="d-hasard">Appliquer</button><button class="preset" id="d-raz">Aucun défaut</button><button class="preset" id="d-sim">Voir dans le simulateur</button></div>
+        <div id="d-cycle"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-fonds" hidden>
+  <div class="layout">
+    <aside class="panel controls">
+      <h2>Tontine</h2>
+      <div class="field"><label for="N">Nombre de membres <span class="val" id="N_v"></span></label>
+        <div class="pair"><input type="range" id="N_r" min="5" max="50" step="1" value="22"><input type="number" id="N" min="5" max="50" step="1" value="22"></div></div>
+      <div class="field"><label for="C">Cotisation par tour (FCFA)</label>
+        <input type="number" id="C" min="500" max="1000000" step="100" value="8667"></div>
+      <div class="field"><label for="p">Taux de défaut réel <span class="val" id="p_v"></span></label>
+        <div class="pair"><input type="range" id="p_r" min="0" max="50" step="0.01" value="1.23"><input type="number" id="p" min="0" max="50" step="0.01" value="1.23"></div>
+        <div class="hint">Probabilité qu'un membre déjà servi cesse de cotiser.</div></div>
+
+      <hr class="sep">
+      <h2>Fonds de compensation</h2>
+      <div class="radios field">
+        <label><input type="radio" name="mode" value="prime" checked> Prime fixée par membre</label>
+        <label><input type="radio" name="mode" value="objectif"> Objectif de couverture</label>
+      </div>
+      <div id="box-prime">
+        <div class="field"><label for="prime">Prime par membre (FCFA) <span class="val" id="prime_v"></span></label>
+          <div class="pair"><input type="range" id="prime_r" min="0" max="20000" step="10" value="1097"><input type="number" id="prime" min="0" max="200000" step="10" value="1097"></div>
+          <div class="hint">1 097 FCFA est la prime de référence du mémoire.</div></div>
+      </div>
+      <div id="box-obj" hidden>
+        <div class="field"><label for="alpha">Cycles à découvert admis <span class="val" id="alpha_v"></span></label>
+          <div class="pair"><input type="range" id="alpha_r" min="0.1" max="50" step="0.1" value="5"><input type="number" id="alpha" min="0.1" max="50" step="0.1" value="5"></div>
+          <div class="hint">Le fonds est le quantile correspondant de la perte d'un cycle.</div></div>
+        <div class="hint" id="obj_readout"></div>
+        <div class="field"><label style="font-weight:500"><input type="checkbox" id="sameP" checked> Dimensionner sur le taux de défaut réel</label></div>
+        <div class="field" id="box-pdim" hidden><label for="pdim">Taux supposé au dimensionnement <span class="val" id="pdim_v"></span></label>
+          <div class="pair"><input type="range" id="pdim_r" min="0" max="50" step="0.01" value="1.23"><input type="number" id="pdim" min="0" max="50" step="0.01" value="1.23"></div>
+          <div class="hint">Si le taux réel est différent, le fonds ne tient plus sa promesse.</div></div>
+      </div>
+
+      <hr class="sep">
+      <h2>Règle d'indemnisation mise en avant</h2>
+      <div class="radios field">
+        <label><input type="radio" name="rule" value="A" checked> A : immédiate, premier arrivé premier servi (prototype)</label>
+        <label><input type="radio" name="rule" value="B"> B : différée en fin de cycle, priorité aux derniers</label>
+      </div>
+
+      <hr class="sep">
+      <h2>Scénarios</h2>
+      <div class="presets">
+        <button class="preset" data-preset="ref">Référence du mémoire</button>
+        <button class="preset" data-preset="obj95">Objectif 95 %</button>
+        <button class="preset" data-preset="stress10">Défaut réel de 10 %</button>
+        <button class="preset" data-preset="sous">Fonds sous-estimé</button>
+        <button class="preset" data-preset="petit">Petit groupe (10)</button>
+      </div>
+    </aside>
+
+    <div class="results">
+      <div id="cards"></div>
+      <div class="charts">
+        <div class="chart"><h3>Risque de manque par position</h3><p class="sub">Probabilité de recevoir un pot incomplet, selon la position dans le cycle.</p><div id="ch-profil"></div></div>
+        <div class="chart"><h3>Taille du fonds : coût et protection</h3><p class="sub">Coût net pour le membre et cycles à découvert selon la prime versée.</p><div id="ch-front"></div></div>
+      </div>
+      <details class="more" style="margin-top:14px"><summary>Plus de graphiques</summary>
+        <div class="charts" style="margin-top:12px">
+          <div class="chart"><h3>Répartition de la perte d'un cycle</h3><p class="sub">Vert : couvert par le fonds. Rouge : non couvert.</p><div id="ch-pmf"></div></div>
+          <div class="chart"><h3>Robustesse : si le taux de défaut réel change</h3><p class="sub">Cycles à découvert avec le fonds actuel.</p><div id="ch-robust"></div></div>
+        </div>
+      </details>
+      <details class="more" style="margin-top:14px"><summary>Dimensionner le fonds selon un objectif de couverture</summary>
+        <div id="table-obj"></div>
+        <div class="note" id="note-eq"></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ONGLET 2 ===================== -->
+<section id="tab-central" hidden>
+  <div class="layout">
+    <aside class="panel controls">
+      <h2>Tontine</h2>
+      <div class="field"><label for="cN">Nombre de membres</label><input type="number" id="cN" min="5" max="50" step="1" value="22"></div>
+      <div class="field"><label for="cC">Cotisation par tour (FCFA)</label><input type="number" id="cC" min="500" max="1000000" step="100" value="8667"></div>
+      <hr class="sep">
+      <h2>Gestionnaire centralisé</h2>
+      <div class="field"><label for="cq">Prélèvement sur chaque tour (q) <span class="val" id="cq_v"></span></label>
+        <div class="pair"><input type="range" id="cq_r" min="0" max="20" step="0.5" value="3"><input type="number" id="cq" min="0" max="20" step="0.5" value="3"></div></div>
+      <div class="field"><label for="cp">Probabilité de disparition, par tour (ρ) <span class="val" id="cp_v"></span></label>
+        <div class="pair"><input type="range" id="cp_r" min="0" max="10" step="0.1" value="1"><input type="number" id="cp" min="0" max="10" step="0.1" value="1"></div>
+        <div class="hint">Valeurs illustratives : aucune donnée ne renseigne la fraude dans les tontines centralisées.</div></div>
+    </aside>
+    <div class="results">
+      <div class="cards" id="ccards"></div>
+      <div class="charts">
+        <div class="chart" style="grid-column: 1 / -1"><h3>Risque de ne pas recevoir le pot (disparition du gestionnaire)</h3><p class="sub">Probabilité que la tontine se soit effondrée avant la position, centralisé contre blockchain.</p><div id="ch-central"></div></div>
+      </div>
+      <div class="note">Le risque nul de la version blockchain suppose les fonds déjà convertis en jetons numériques. Le risque au point d'entrée, quand l'argent liquide devient numérique, n'est pas modélisé : il reste entier (section 2.3 du Chapitre III).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ONGLET 3 ===================== -->
+<section id="tab-aide" hidden>
+  <div class="help">
+    <h2>Ce que montre cette page</h2>
+    <p>Une tontine rotative de N membres verse un pot à chaque tour. Un membre déjà servi peut cesser de cotiser : les pots suivants sont alors incomplets d'une cotisation. Le fonds de compensation, alimenté par une prime versée une seule fois à l'inscription, comble ces manques dans la limite de son solde. En fin de cycle, le solde non dépensé est remboursé.</p>
+    <h2>L'onglet Ma tontine</h2>
+    <p>Il permet de saisir de vrais membres, de tirer l'ordre au sort, puis de faire tourner un cycle : on voit à chaque tour qui reçoit le pot, combien il manque et ce que le fonds comble. En cochant un membre qui cesse de cotiser après avoir reçu son pot, on voit qui supporte la perte. La liste des membres est enregistrée dans le navigateur et peut être exportée ou importée.</p>
+    <h2>Comment lire les indicateurs</h2>
+    <ul>
+      <li><b>Mise de départ</b> : la prime versée à l'inscription. <b>Coût net</b> : cette prime moins le solde remboursé en fin de cycle, c'est-à-dire ce que le fonds dépense en moyenne par membre.</li>
+      <li><b>Cycles à découvert</b> : part des cycles où la perte dépasse le fonds, donc où au moins un membre reçoit un pot incomplet.</li>
+      <li><b>Défauts entièrement absorbés</b> : parmi les cycles où un défaut survient, part de ceux dont la perte est couverte en totalité.</li>
+      <li><b>Règle A</b> : le fonds indemnise au moment où le manque survient, dans l'ordre des tours (règle du prototype). <b>Règle B</b> : le fonds attend la fin du cycle et paie du dernier au premier. Les deux règles laissent la perte totale inchangée : elles ne font que déplacer qui la porte.</li>
+      <li><b>Objectif de couverture</b> : on fixe la part maximale de cycles à découvert, et le fonds est le quantile correspondant de la perte. La prime en découle.</li>
+    </ul>
+    <h2>Hypothèses du modèle</h2>
+    <ul>
+      <li>Seul un membre déjà servi peut faire défaut. Il cesse alors de cotiser jusqu'à la fin du cycle.</li>
+      <li>Les membres non encore servis cotisent à chaque tour.</li>
+      <li>Les défauts sont indépendants, de même probabilité. Le défaut est un aléa, jamais un choix : ni collusion ni comportement stratégique. Les résultats sont donc conditionnels au taux de défaut retenu.</li>
+      <li>Pas d'inflation, d'actualisation ni de volatilité. Le coût du délai de la règle B n'est pas mesuré.</li>
+      <li>La prime de référence du mémoire (1 097 FCFA) est estimée par simulation. La valeur exacte est p × C × (N − 1) / 2, soit 1 119 FCFA aux paramètres de référence : l'écart de 2 % est du bruit de simulation.</li>
+    </ul>
+    <h2>Méthode</h2>
+    <p>La perte d'un cycle est une somme pondérée de défauts indépendants. Sa loi est calculée exactement par programmation dynamique : il n'y a donc ni tirage aléatoire ni bruit de simulation. Ces résultats coïncident avec les simulations de Monte Carlo du mémoire (600 000 cycles) aux écarts de simulation près.</p>
+    <h2>Limites</h2>
+    <p>Aucune donnée ne renseigne le taux de défaut dans les tontines de l'UEMOA : le taux de référence de 1,23 % vient de tontines à enchère commerciales en Inde du Sud. Ce simulateur est un outil d'illustration issu d'un mémoire de recherche, il ne constitue pas un conseil financier.</p>
+  </div>
+</section>
+</main>
+<footer>Kafo Protocol, mémoire de Master 2 Finance Digitale, Dakar Institute of Technology, 2025-2026. Auteur : Hanaphiou Deen Diallo. Calcul exact, sans connexion ni serveur.</footer>
+
+<script>
+/* Kafo Protocol : noyau de calcul exact (aucun tirage aleatoire).
+ *
+ * Modele : N membres, cotisation C, un seul membre servi par tour. Un membre deja servi (positions 1 a N-1)
+ * cesse de cotiser avec la probabilite p, independamment des autres. Un defaut a la position j prive les
+ * N - j positions suivantes d'une cotisation. La perte d'un cycle sans fonds vaut donc
+ *     S x C,  avec  S = somme des d_j x (N - j),  d_j ~ Bernoulli(p) independants.
+ * La loi de S est calculee exactement par programmation dynamique.
+ */
+const KafoCore = (function () {
+  'use strict';
+
+  // G[k] = loi de la somme ponderee avec les poids 1..k
+  function weightedPmfs(m, p) {
+    const G = new Array(m + 1);
+    G[0] = new Float64Array([1]);
+    for (let k = 1; k <= m; k++) {
+      const prev = G[k - 1];
+      const cur = new Float64Array(prev.length + k);
+      for (let s = 0; s < prev.length; s++) {
+        cur[s] += prev[s] * (1 - p);
+        cur[s + k] += prev[s] * p;
+      }
+      G[k] = cur;
+    }
+    return G;
+  }
+
+  // loi de S pour N membres (poids 1..N-1), sans stocker les etapes intermediaires
+  function pmfS(N, p) {
+    let pmf = new Float64Array([1]);
+    for (let k = 1; k <= N - 1; k++) {
+      const cur = new Float64Array(pmf.length + k);
+      for (let s = 0; s < pmf.length; s++) {
+        cur[s] += pmf[s] * (1 - p);
+        cur[s + k] += pmf[s] * p;
+      }
+      pmf = cur;
+    }
+    return pmf;
+  }
+
+  function tail(pmf, x) {                     // P(S > x), x reel
+    let start = Math.floor(x) + 1;
+    if (start < 0) start = 0;
+    let t = 0;
+    for (let s = start; s < pmf.length; s++) t += pmf[s];
+    return t;
+  }
+  function mean(pmf) { let m = 0; for (let s = 0; s < pmf.length; s++) m += s * pmf[s]; return m; }
+  function expExcess(pmf, f) {                // E[max(S - f, 0)]
+    let e = 0;
+    for (let s = Math.max(0, Math.floor(f) + 1); s < pmf.length; s++) e += (s - f) * pmf[s];
+    return e;
+  }
+  function expMin(pmf, f) {                    // E[min(S, f)]
+    let e = 0;
+    for (let s = 0; s < pmf.length; s++) e += Math.min(s, f) * pmf[s];
+    return e;
+  }
+  function binomPmf(n, p) {
+    const b = new Float64Array(n + 1);
+    if (p <= 0) { b[0] = 1; return b; }
+    if (p >= 1) { b[n] = 1; return b; }
+    b[0] = Math.pow(1 - p, n);
+    for (let a = 0; a < n; a++) b[a + 1] = b[a] * (n - a) / (a + 1) * p / (1 - p);
+    return b;
+  }
+
+  function equilibriumPremium(N, C, p) { return p * C * (N - 1) / 2; }   // exact : E[perte] / N
+
+  // fonds (FCFA) = plus petit multiple de C tel que P(perte > fonds) <= alpha
+  function fundForObjective(N, C, p, alpha) {
+    const pmf = pmfS(N, p);
+    let cum = 0;
+    for (let s = 0; s < pmf.length; s++) {
+      cum += pmf[s];
+      if (1 - cum <= alpha + 1e-12) return s * C;
+    }
+    return (pmf.length - 1) * C;
+  }
+
+  // statistiques d'un cycle pour un fonds F (FCFA)
+  function cycleStats(N, C, p, F) {
+    const pmf = pmfS(N, p), f = F / C;
+    const meanLoss = mean(pmf) * C;
+    const pOver = tail(pmf, f);
+    const lossWith = expExcess(pmf, f) * C;
+    const spent = expMin(pmf, f) * C;
+    const pAny = 1 - pmf[0];
+    return {
+      pmf, f, meanLoss, lossWith, pOver, pAny, spent,
+      reduction: meanLoss > 0 ? (1 - lossWith / meanLoss) * 100 : 0,
+      netCostPerMember: spent / N,
+      outlayPerMember: F / N,
+      absorbed: pAny > 0 ? (1 - pOver / pAny) * 100 : 100,
+    };
+  }
+
+  // risque de manque (probabilite de recevoir un pot incomplet) par position
+  function positionProfiles(N, p, f) {
+    const G = weightedPmfs(N - 1, p);
+    const base = [], A = [], B = [];
+    for (let t = 1; t <= N; t++) {
+      base.push(1 - Math.pow(1 - p, t - 1));
+      A.push(tail(G[t - 1], f));                       // regle A : indemnisation immediate, dans l'ordre des tours
+      const n = t - 1, m = N - t, bin = binomPmf(n, p);
+      let pb = 0;                                       // regle B : reglement differe, du dernier au premier
+      for (let a = 1; a <= n; a++) pb += bin[a] * tail(G[m], f - a * (N - t + 1));
+      B.push(pb);
+    }
+    return { base, A, B };
+  }
+
+  // gestionnaire centralise : prelevement q par tour, disparition avec la probabilite pab a chaque tour
+  function centralised(N, C, q, pab) {
+    const POT = N * C, rows = [];
+    let expectedLoss = 0;
+    for (let pos = 1; pos <= N; pos++) {
+      const survive = Math.pow(1 - pab, pos);
+      rows.push(1 - survive);
+      expectedLoss += POT - POT * (1 - q) * survive;
+    }
+    return { notReceived: rows, pCollapse: 1 - Math.pow(1 - pab, N), expectedLoss, receivedIfOk: POT * (1 - q), POT };
+  }
+
+  // un cycle concret : order = noms dans l'ordre de passage ; defaultAfter[i] = le membre en position i
+  // cesse de cotiser apres avoir ete servi (a partir du tour suivant)
+  function demoCycle(order, defaultAfter, C, prime) {
+    const N = order.length;
+    let fund = N * prime;
+    const paid = new Array(N).fill(prime), received = new Array(N).fill(0), rounds = [];
+    for (let t = 0; t < N; t++) {
+      let payers = 0;
+      for (let j = 0; j < N; j++) {
+        if (!(defaultAfter[j] && j < t)) { payers++; paid[j] += C; }
+      }
+      const collected = payers * C, shortfall = N * C - collected, covered = Math.min(shortfall, fund);
+      fund -= covered;
+      rounds.push({ t: t + 1, beneficiary: t, payers, collected, shortfall, covered, uncovered: shortfall - covered, pot: collected + covered, fund });
+      received[t] += collected + covered;
+    }
+    const good = []; for (let j = 0; j < N; j++) if (!defaultAfter[j]) good.push(j);
+    const refund = good.length ? fund / good.length : 0;
+    good.forEach(j => { received[j] += refund; });
+    return { N, rounds, fundLeft: fund, refund, paid, received };
+  }
+
+  return { demoCycle, weightedPmfs, pmfS, tail, mean, expExcess, expMin, binomPmf, equilibriumPremium, fundForObjective, cycleStats, positionProfiles, centralised };
+})();
+if (typeof module !== 'undefined') module.exports = KafoCore;
+
+</script>
+<script>
+(function () {
+  'use strict';
+  const K = KafoCore;
+  const $ = id => document.getElementById(id);
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const nfmt = d => { const nf = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }); return { format: x => nf.format(x).replace(/\u202f/g, '\u00a0') }; };
+  const f0 = x => nfmt(0).format(x), f1 = x => nfmt(1).format(x), f2 = x => nfmt(2).format(x);
+  const pct = (x, d) => nfmt(d === undefined ? 1 : d).format(x) + ' %';
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const sum = a => a.reduce((x, y) => x + y, 0);
+
+  /* ------------------------------------------------------------------ entrees */
+  function num(id, min, max, def) {
+    let v = parseFloat($(id).value);
+    if (!isFinite(v)) v = def;
+    return Math.min(max, Math.max(min, v));
+  }
+  function params() {
+    const N = Math.round(num('N', 5, 50, 22)), C = num('C', 500, 1e6, 8667);
+    const p = num('p', 0, 50, 1.23) / 100;
+    const mode = document.querySelector('input[name=mode]:checked').value;
+    const rule = document.querySelector('input[name=rule]:checked').value;
+    const prime = num('prime', 0, 200000, 1097);
+    const alpha = num('alpha', 0.1, 50, 5) / 100;
+    const sameP = $('sameP').checked;
+    const pdim = sameP ? p : num('pdim', 0, 50, 1.23) / 100;
+    return { N, C, p, mode, rule, prime, alpha, sameP, pdim };
+  }
+  function compute(P) {
+    const F = P.mode === 'prime' ? P.N * P.prime : K.fundForObjective(P.N, P.C, P.pdim, P.alpha);
+    const st = K.cycleStats(P.N, P.C, P.p, F);
+    const prof = K.positionProfiles(P.N, P.p, F / P.C);
+    return { F, st, prof, prem: F / P.N };
+  }
+
+  /* ------------------------------------------------------------------ graphiques SVG */
+  function niceStep(range, n) {
+    const raw = range / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+    return (norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10) * mag;
+  }
+  function ticks(min, max, n) {
+    if (!(max > min)) return [min];
+    const step = niceStep(max - min, n), t = [];
+    for (let v = Math.ceil(min / step - 1e-9) * step; v <= max + 1e-9; v += step) t.push(+v.toFixed(10));
+    return t;
+  }
+  function niceMax(v, cap) {
+    if (!(v > 0)) return 1;
+    const step = niceStep(v * 1.1, 4), m = Math.ceil(v * 1.08 / step) * step;
+    return cap ? Math.min(cap, m) : m;
+  }
+  const fmtTick = v => (Math.abs(v) >= 1000 ? f0(v) : Number.isInteger(v) ? String(v) : (Math.round(v * 10) / 10).toString().replace('.', ','));
+
+  function frame(cfg, m, W, H, iw, ih, X, Y, Y2) {
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" font-family="Arial, Helvetica, sans-serif" role="img" aria-label="${esc(cfg.title)}">`;
+    s += `<rect width="${W}" height="${H}" fill="#ffffff"/>`;
+    for (const v of ticks(cfg.ymin, cfg.ymax, 5)) {
+      const y = Y(v);
+      s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>`;
+      s += `<text x="${m.l - 7}" y="${y + 4}" font-size="11" text-anchor="end" fill="#374151">${fmtTick(v)}</text>`;
+    }
+    if (cfg.y2) for (const v of ticks(cfg.y2.min, cfg.y2.max, 5)) {
+      s += `<text x="${W - m.r + 7}" y="${Y2(v) + 4}" font-size="11" fill="#374151">${fmtTick(v)}</text>`;
+    }
+    for (const v of (cfg.xticks || ticks(cfg.xmin, cfg.xmax, 8))) {
+      const x = X(v);
+      s += `<line x1="${x}" x2="${x}" y1="${m.t + ih}" y2="${m.t + ih + 4}" stroke="#6b7280" stroke-width="1"/>`;
+      s += `<text x="${x}" y="${m.t + ih + 17}" font-size="11" text-anchor="middle" fill="#374151">${fmtTick(v)}</text>`;
+    }
+    s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t + ih}" stroke="#6b7280" stroke-width="1"/>`;
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${m.t + ih}" y2="${m.t + ih}" stroke="#6b7280" stroke-width="1"/>`;
+    s += `<text x="${m.l + iw / 2}" y="${H - 6}" font-size="12" text-anchor="middle" fill="#111827">${esc(cfg.xlabel || '')}</text>`;
+    s += `<text transform="rotate(-90 13 ${m.t + ih / 2})" x="13" y="${m.t + ih / 2}" font-size="12" text-anchor="middle" fill="#111827">${esc(cfg.ylabel || '')}</text>`;
+    if (cfg.y2) s += `<text transform="rotate(90 ${W - 12} ${m.t + ih / 2})" x="${W - 12}" y="${m.t + ih / 2}" font-size="12" text-anchor="middle" fill="#111827">${esc(cfg.y2.label || '')}</text>`;
+    return s;
+  }
+  function legendHtml(series) {
+    return '<div class="legend">' + series.map(s => `<span><i style="background:${s.color};${s.dash ? 'opacity:.55' : ''}"></i>${esc(s.name)}</span>`).join('') + '</div>';
+  }
+
+  function lineChart(el, cfg) {
+    const W = 640, H = 340, m = { l: 54, r: cfg.y2 ? 54 : 16, t: 16, b: 44 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const X = x => m.l + (x - cfg.xmin) / ((cfg.xmax - cfg.xmin) || 1) * iw;
+    const Y = y => m.t + ih - (y - cfg.ymin) / ((cfg.ymax - cfg.ymin) || 1) * ih;
+    const Y2 = cfg.y2 ? (y => m.t + ih - (y - cfg.y2.min) / ((cfg.y2.max - cfg.y2.min) || 1) * ih) : null;
+    let s = frame(cfg, m, W, H, iw, ih, X, Y, Y2);
+    for (const v of (cfg.vlines || [])) {
+      const x = X(v.x);
+      if (x < m.l - 1 || x > W - m.r + 1) continue;
+      s += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t + ih}" stroke="${v.color || '#6b7280'}" stroke-width="1.3"${v.dash === '0' ? '' : ' stroke-dasharray="' + (v.dash || '4 3') + '"'}/>`;
+      if (v.label) s += `<text x="${x + 4}" y="${m.t + 11 + (v.row || 0) * 12}" font-size="10.5" fill="${v.color || '#6b7280'}">${esc(v.label)}</text>`;
+    }
+    for (const se of cfg.series) {
+      const yf = se.axis === 'y2' ? Y2 : Y;
+      s += `<polyline fill="none" stroke="${se.color}" stroke-width="${se.w || 2.2}" stroke-linejoin="round"${se.dash ? ` stroke-dasharray="${se.dash}"` : ''} points="${se.pts.map(p => X(p[0]).toFixed(1) + ',' + yf(p[1]).toFixed(1)).join(' ')}"/>`;
+      if (se.marker) for (const p of se.pts) s += `<circle cx="${X(p[0]).toFixed(1)}" cy="${yf(p[1]).toFixed(1)}" r="2.3" fill="${se.color}"/>`;
+    }
+    for (const p of (cfg.points || [])) {
+      const yf = p.axis === 'y2' ? Y2 : Y;
+      s += `<circle cx="${X(p.x).toFixed(1)}" cy="${yf(p.y).toFixed(1)}" r="5.5" fill="${p.color}" stroke="#ffffff" stroke-width="2"/>`;
+    }
+    s += '</svg>';
+    el.style.position = 'relative';
+    el.innerHTML = s + legendHtml(cfg.series) + '<div class="tip"></div>';
+    attachHover(el, cfg, W, m, iw, X);
+  }
+
+  function attachHover(el, cfg, W, m, iw, X) {
+    const svg = el.querySelector('svg'), tip = el.querySelector('.tip');
+    const guide = document.createElementNS(SVGNS, 'line');
+    guide.setAttribute('stroke', '#111827'); guide.setAttribute('stroke-width', '1'); guide.setAttribute('stroke-dasharray', '3 3');
+    guide.setAttribute('y1', m.t); guide.setAttribute('y2', 340 - 44); guide.style.display = 'none';
+    svg.appendChild(guide);
+    const nearest = (pts, x) => { let b = pts[0], d = Infinity; for (const p of pts) { const k = Math.abs(p[0] - x); if (k < d) { d = k; b = p; } } return b; };
+    svg.addEventListener('mousemove', ev => {
+      const r = svg.getBoundingClientRect(), box = el.getBoundingClientRect();
+      const mx = (ev.clientX - r.left) / (r.width || 1) * W;
+      if (mx < m.l || mx > W - m.r) { tip.style.display = 'none'; guide.style.display = 'none'; return; }
+      const xv = cfg.xmin + (mx - m.l) / iw * (cfg.xmax - cfg.xmin);
+      const ref = nearest(cfg.series[0].pts, xv);
+      guide.setAttribute('x1', X(ref[0])); guide.setAttribute('x2', X(ref[0])); guide.style.display = '';
+      let h = `<b>${cfg.xname || 'x'} ${fmtTick(Math.round(ref[0] * 100) / 100)}</b>`;
+      for (const se of cfg.series) { const p = nearest(se.pts, ref[0]); h += `<br>${esc(se.name)} : ${fmtTick(Math.round(p[1] * 10) / 10)}${se.unit === undefined ? ' %' : se.unit}`; }
+      tip.innerHTML = h; tip.style.display = 'block';
+      tip.style.left = Math.min(ev.clientX - box.left + 14, box.width - 190) + 'px';
+      tip.style.top = (ev.clientY - box.top - 12) + 'px';
+    });
+    svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; guide.style.display = 'none'; });
+  }
+
+  function barChart(el, cfg) {
+    const W = 640, H = 340, m = { l: 54, r: 16, t: 16, b: 44 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const X = x => m.l + (x - cfg.xmin) / ((cfg.xmax - cfg.xmin) || 1) * iw;
+    const Y = y => m.t + ih - (y - cfg.ymin) / ((cfg.ymax - cfg.ymin) || 1) * ih;
+    let s = frame(cfg, m, W, H, iw, ih, X, Y, null);
+    const bw = Math.max(1, iw / (cfg.xmax - cfg.xmin) * 0.8);
+    for (const b of cfg.bars) s += `<rect x="${(X(b.x) - bw / 2).toFixed(1)}" y="${Y(b.y).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, m.t + ih - Y(b.y)).toFixed(1)}" fill="${b.color}"/>`;
+    if (cfg.vline) {
+      const x = X(cfg.vline.x);
+      s += `<line x1="${x}" x2="${x}" y1="${m.t}" y2="${m.t + ih}" stroke="#111827" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+      s += `<text x="${x + 5}" y="${m.t + 12}" font-size="11" fill="#111827">${esc(cfg.vline.label)}</text>`;
+    }
+    if (cfg.note) s += `<text x="${W - m.r - 4}" y="${m.t + 30}" font-size="11.5" text-anchor="end" fill="#374151">${esc(cfg.note)}</text>`;
+    s += '</svg>';
+    el.innerHTML = s + `<div class="legend"><span><i style="background:#2e9e5b"></i>couvert par le fonds</span><span><i style="background:#b4452f"></i>non couvert</span></div>`;
+  }
+
+  /* ------------------------------------------------------------------ onglet 1 */
+  function card(t, v, s, cls) { return `<div class="card ${cls || ''}"><div class="t">${t}</div><div class="v">${v}</div><div class="s">${s}</div></div>`; }
+
+  function renderCards(P, R) {
+    const st = R.st, touched = { A: sum(R.prof.A), B: sum(R.prof.B) };
+    const over = st.pOver * 100, cls = over < 5 ? 'good' : over < 25 ? 'warn' : 'bad';
+    const main =
+      card('Chance que tout le monde reçoive son pot complet', pct(100 - over), 'sinon, au moins un pot est incomplet', cls) +
+      card('Mise de départ par membre', f0(R.prem) + ' FCFA', `${pct(R.prem / P.C * 100, 0)} de la cotisation`) +
+      card('Coût réel après remboursement', f0(st.netCostPerMember) + ' FCFA', `${pct(st.netCostPerMember / P.C * 100, 0)} de la cotisation`) +
+      card('Perte évitée', pct(st.reduction, 0), 'de la perte moyenne par cycle');
+    const more =
+      card('Fonds de compensation', f0(R.F) + ' FCFA', `soit ${f1(R.F / P.C)} cotisations`) +
+      card('Perte moyenne par cycle', f0(st.lossWith) + ' FCFA', `sans fonds : ${f0(st.meanLoss)} FCFA`) +
+      card('Défauts entièrement absorbés', pct(st.absorbed, 0), 'parmi les cycles où un défaut survient') +
+      card('Membres touchés par cycle', f2(touched[P.rule]), `règle A : ${f2(touched.A)} ; règle B : ${f2(touched.B)}`) +
+      card('Cycles sans aucune perte', pct(K.pmfS(P.N, P.p)[0] * 100), 'aucun membre servi ne fait défaut');
+    $('cards').innerHTML = `<div class="cards">${main}</div><details class="more"><summary>Plus d'indicateurs</summary><div class="cards" style="margin-top:10px">${more}</div></details>`;
+  }
+
+  function chartProfile(P, R) {
+    const pts = a => a.map((v, i) => [i + 1, v * 100]);
+    const base = pts(R.prof.base), A = pts(R.prof.A), B = pts(R.prof.B);
+    const ymax = niceMax(Math.max.apply(null, base.map(q => q[1]).concat([1])), 100);
+    lineChart($('ch-profil'), {
+      title: 'Risque de manque par position', xmin: 1, xmax: P.N, ymin: 0, ymax, xlabel: 'Position dans le cycle', ylabel: '% de membres à découvert', xname: 'Position', xticks: ticks(1, P.N, 8),
+      series: [
+        { name: 'Sans fonds', color: '#9ca3af', dash: '5 4', pts: base, w: 2 },
+        { name: 'Règle A : immédiate (prototype)', color: '#1f6f4a', pts: A, w: P.rule === 'A' ? 3.6 : 2, marker: P.N <= 30 },
+        { name: 'Règle B : fin de cycle, derniers d\'abord', color: '#c8902e', pts: B, w: P.rule === 'B' ? 3.6 : 2, marker: P.N <= 30 }]
+    });
+  }
+
+  function chartPmf(P, R) {
+    const pmf = R.st.pmf, f = R.st.f;
+    let smax = pmf.length - 1, acc = 0;
+    for (let s = 0; s < pmf.length; s++) { acc += pmf[s]; if (1 - acc < 1e-4) { smax = s; break; } }
+    smax = Math.min(Math.max(smax, Math.ceil(f) + 2, 12), pmf.length - 1, 400);
+    const bars = []; let ymax = 0;
+    for (let s = 1; s <= smax; s++) { const y = pmf[s] * 100; ymax = Math.max(ymax, y); bars.push({ x: s, y, color: s <= f + 1e-9 ? '#2e9e5b' : '#b4452f' }); }
+    barChart($('ch-pmf'), {
+      title: 'Répartition de la perte d\'un cycle', xmin: 0, xmax: smax + 1, ymin: 0, ymax: niceMax(ymax), bars,
+      xlabel: 'Perte du cycle, en cotisations manquantes (1 cotisation = ' + f0(P.C) + ' FCFA)', ylabel: '% des cycles',
+      vline: { x: f, label: 'fonds : ' + f1(f) + ' cotisations' },
+      note: pct(pmf[0] * 100) + ' des cycles sans perte (non représentés)'
+    });
+  }
+
+  function chartFront(P, R) {
+    const pmf = R.st.pmf, N = P.N, C = P.C;
+    const objs = [0.10, 0.05, 0.01].map(a => ({ a, prem: K.fundForObjective(N, C, P.pdim, a) / N / C * 100 }));
+    const premCur = R.prem / C * 100;
+    const xmax = Math.min(3000, Math.max(150, premCur * 1.15, Math.max.apply(null, objs.map(o => o.prem)) * 1.12));
+    const net = [], over = []; let nmax = 0;
+    const steps = 90;
+    for (let i = 0; i <= steps; i++) {
+      const x = xmax * i / steps, f = N * x / 100;
+      const n = K.expMin(pmf, f) / N * 100;
+      nmax = Math.max(nmax, n);
+      net.push([x, n]); over.push([x, K.tail(pmf, f) * 100]);
+    }
+    const nowF = R.st.f, nowNet = R.st.netCostPerMember / C * 100;
+    lineChart($('ch-front'), {
+      title: 'Taille du fonds : coût et protection', xmin: 0, xmax, ymin: 0, ymax: niceMax(nmax), y2: { min: 0, max: 100, label: 'Cycles à découvert, en %' },
+      xlabel: 'Prime par membre, en % de la cotisation', ylabel: 'Coût net, en % de la cotisation', xname: 'Prime', xticks: ticks(0, xmax, 8),
+      series: [
+        { name: 'Coût net (axe de gauche)', color: '#1f6f4a', pts: net, w: 2.4, unit: ' % de C' },
+        { name: 'Cycles à découvert (axe de droite)', color: '#b4452f', pts: over, w: 2.4, axis: 'y2' }],
+      vlines: objs.map((o, i) => ({ x: o.prem, label: (o.a * 100) + ' %', color: '#6b7280', dash: '2 3', row: i })).concat([{ x: premCur, label: 'actuel', color: '#111827', dash: '0', row: 3 }]),
+      points: [{ x: premCur, y: nowNet, color: '#1f6f4a' }, { x: premCur, y: R.st.pOver * 100, color: '#b4452f', axis: 'y2' }]
+    });
+  }
+
+  function chartRobust(P, R) {
+    const f = R.st.f, xmax = Math.min(50, Math.max(30, P.p * 100 * 1.15));
+    const withF = [], noF = [];
+    for (let i = 0; i <= 120; i++) {
+      const x = xmax * i / 120, pm = K.pmfS(P.N, x / 100);
+      withF.push([x, K.tail(pm, f) * 100]); noF.push([x, (1 - pm[0]) * 100]);
+    }
+    const vl = (P.mode === 'objectif' && !P.sameP) ? [{ x: P.pdim * 100, label: 'taux de dimensionnement', color: '#1f6f4a', dash: '4 3' }] : [];
+    lineChart($('ch-robust'), {
+      title: 'Robustesse', xmin: 0, xmax, ymin: 0, ymax: 100, xlabel: 'Taux de défaut réel, en %', ylabel: 'Cycles à découvert, en %', xname: 'Défaut', xticks: ticks(0, xmax, 8),
+      series: [{ name: 'Avec le fonds actuel', color: '#b4452f', pts: withF, w: 2.6 }, { name: 'Sans fonds', color: '#9ca3af', dash: '5 4', pts: noF, w: 2 }],
+      vlines: vl, points: [{ x: P.p * 100, y: R.st.pOver * 100, color: '#b4452f' }]
+    });
+  }
+
+  function renderTable(P) {
+    const eq = K.equilibriumPremium(P.N, P.C, P.pdim);
+    const rows = [{ lab: 'Prime d\'équilibre (référence)', F: P.N * eq }]
+      .concat([0.10, 0.05, 0.01].map(a => ({ lab: 'Au plus ' + (a * 100) + ' % à découvert', F: K.fundForObjective(P.N, P.C, P.pdim, a) })));
+    let h = '<table class="obj"><thead><tr><th>Objectif</th><th>Fonds (FCFA)</th><th>Prime par membre</th><th>Mise (% de C)</th><th>Coût net (% de C)</th><th>Baisse de la perte</th><th>À découvert (taux réel)</th></tr></thead><tbody>';
+    for (const r of rows) {
+      const s = K.cycleStats(P.N, P.C, P.p, r.F);
+      h += `<tr><td>${r.lab}</td><td>${f0(r.F)}</td><td>${f0(r.F / P.N)} FCFA</td><td>${pct(r.F / P.N / P.C * 100)}</td><td>${pct(s.netCostPerMember / P.C * 100)}</td><td>${pct(s.reduction, 0)}</td><td>${pct(s.pOver * 100)}</td></tr>`;
+    }
+    $('table-obj').innerHTML = h + '</tbody></table>';
+    const isRef = P.N === 22 && Math.abs(P.C - 8667) < 0.5 && Math.abs(P.pdim - 0.0123) < 1e-6;
+    $('note-eq').innerHTML = `Prime d'équilibre exacte : p × C × (N − 1) / 2 = <b>${f0(eq)} FCFA</b>.` +
+      (isRef ? ' Le mémoire retient 1 097 FCFA, estimée par simulation : l\'écart de 2 % est du bruit de simulation.' : '') +
+      ' Le niveau de couverture visé est un choix de gouvernance : rien dans les données ne désigne 95 % plutôt que 90 % ou 99 %.';
+  }
+
+  function labels(P, R) {
+    $('N_v').textContent = P.N + ' membres';
+    $('p_v').textContent = pct(P.p * 100, 2);
+    $('prime_v').textContent = pct(P.prime / P.C * 100) + ' de C';
+    $('alpha_v').textContent = pct(P.alpha * 100);
+    $('pdim_v').textContent = pct(P.pdim * 100, 2);
+    $('obj_readout').innerHTML = P.mode === 'objectif' ? `Prime correspondante : <b>${f0(R.prem)} FCFA</b> par membre (${pct(R.prem / P.C * 100)} de la cotisation).` : '';
+  }
+
+  function update() {
+    try {
+      const P = params();
+      $('box-prime').hidden = P.mode !== 'prime';
+      $('box-obj').hidden = P.mode !== 'objectif';
+      $('box-pdim').hidden = P.sameP;
+      const R = compute(P);
+      labels(P, R);
+      renderCards(P, R); chartProfile(P, R); chartPmf(P, R); chartFront(P, R); chartRobust(P, R); renderTable(P);
+      saveHash(P);
+    } catch (e) { console.error(e); }
+  }
+
+  /* ------------------------------------------------------------------ onglet 2 */
+  function updateCentral() {
+    try {
+      const N = Math.round(num('cN', 5, 50, 22)), C = num('cC', 500, 1e6, 8667), q = num('cq', 0, 20, 3) / 100, pab = num('cp', 0, 10, 1) / 100;
+      $('cq_v').textContent = pct(q * 100); $('cp_v').textContent = pct(pab * 100);
+      const R = K.centralised(N, C, q, pab);
+      $('ccards').innerHTML =
+        card('Effondrement avant la fin du cycle', pct(R.pCollapse * 100), 'probabilité que le gestionnaire disparaisse au moins une fois', R.pCollapse < 0.05 ? 'good' : R.pCollapse < 0.2 ? 'warn' : 'bad') +
+        card('Montant reçu si aucune disparition', f0(R.receivedIfOk) + ' FCFA', `pot de ${f0(R.POT)} FCFA moins ${pct(q * 100)} de prélèvement`) +
+        card('Perte moyenne par cycle', f0(R.expectedLoss) + ' FCFA', `soit ${f2(R.expectedLoss / R.POT)} pots`) +
+        card('Risque en dernière position', pct(R.notReceived[N - 1] * 100), 'contre 0 % pour la version blockchain (fonds tokenisés)');
+      const pts = R.notReceived.map((v, i) => [i + 1, v * 100]);
+      lineChart($('ch-central'), {
+        title: 'Risque de ne pas recevoir le pot', xmin: 1, xmax: N, ymin: 0, ymax: niceMax(Math.max.apply(null, pts.map(p => p[1]).concat([1])), 100),
+        xlabel: 'Position dans le cycle', ylabel: 'P(pas encore reçu), en %', xname: 'Position', xticks: ticks(1, N, 8),
+        series: [{ name: 'Centralisé', color: '#b4452f', pts, w: 2.8, marker: N <= 30 },
+                 { name: 'Blockchain (fonds tokenisés)', color: '#111827', dash: '6 4', pts: pts.map(p => [p[0], 0]), w: 2 }]
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  /* ------------------------------------------------------------------ etat partage, scenarios, onglets */
+  function saveHash(P) {
+    try {
+      const o = { N: P.N, C: P.C, p: +(P.p * 100).toFixed(4), mode: P.mode, prime: P.prime, alpha: +(P.alpha * 100).toFixed(2), same: P.sameP ? 1 : 0, pdim: +(P.pdim * 100).toFixed(4), rule: P.rule };
+      history.replaceState(null, '', '#' + new URLSearchParams(o).toString());
+    } catch (e) { /* le partage d'etat par l'adresse est facultatif */ }
+  }
+  function setVal(id, v) { $(id).value = v; if ($(id + '_r')) $(id + '_r').value = v; }
+  function applyState(s) {
+    if (s.N !== undefined) setVal('N', s.N);
+    if (s.C !== undefined) $('C').value = s.C;
+    if (s.p !== undefined) setVal('p', s.p);
+    if (s.prime !== undefined) setVal('prime', s.prime);
+    if (s.alpha !== undefined) setVal('alpha', s.alpha);
+    if (s.pdim !== undefined) setVal('pdim', s.pdim);
+    if (s.sameP !== undefined) $('sameP').checked = !!s.sameP;
+    if (s.mode) document.querySelector(`input[name=mode][value=${s.mode}]`).checked = true;
+    if (s.rule) document.querySelector(`input[name=rule][value=${s.rule}]`).checked = true;
+    update();
+  }
+  const PRESETS = {
+    ref: { N: 22, C: 8667, p: 1.23, mode: 'prime', prime: 1097, sameP: true, rule: 'A' },
+    obj95: { N: 22, C: 8667, p: 1.23, mode: 'objectif', alpha: 5, sameP: true, rule: 'A' },
+    stress10: { N: 22, C: 8667, p: 10, mode: 'prime', prime: 1097, sameP: true, rule: 'A' },
+    sous: { N: 22, C: 8667, p: 10, mode: 'objectif', alpha: 5, sameP: false, pdim: 1.23, rule: 'A' },
+    petit: { N: 10, C: 8667, p: 1.23, mode: 'prime', prime: 1097, sameP: true, rule: 'A' }
+  };
+  function loadHash() {
+    const h = location.hash.replace(/^#/, '');
+    if (!h) return false;
+    const q = new URLSearchParams(h), g = k => q.get(k);
+    const s = {};
+    if (g('N')) s.N = +g('N'); if (g('C')) s.C = +g('C'); if (g('p')) s.p = +g('p');
+    if (g('mode') === 'prime' || g('mode') === 'objectif') s.mode = g('mode');
+    if (g('prime')) s.prime = +g('prime'); if (g('alpha')) s.alpha = +g('alpha');
+    if (g('same') !== null) s.sameP = g('same') === '1';
+    if (g('pdim')) s.pdim = +g('pdim');
+    if (g('rule') === 'A' || g('rule') === 'B') s.rule = g('rule');
+    applyState(s); return true;
+  }
+
+  /* ------------------------------------------------------------------ onglet « Ma tontine » */
+  const KEY = 'kafo_tontine_v1';
+  const EXEMPLE = ['Aminata', 'Mamadou', 'Fatoumata', 'Ibrahima', 'Mariama', 'Ousmane', 'Kadiatou', 'Abdoulaye'];
+  const demo = { nom: 'Ma tontine', membres: [], ordre: [], defaut: {}, cot: 10000, primePct: 50 };
+  function demoSave() {
+    try { localStorage.setItem(KEY, JSON.stringify({ nom: demo.nom, membres: demo.membres, cot: demo.cot, primePct: demo.primePct })); } catch (e) { /* stockage indisponible */ }
+  }
+  function demoLoad() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && Array.isArray(s.membres)) {
+        demo.nom = s.nom || demo.nom; demo.membres = s.membres.map(String); demo.cot = +s.cot || demo.cot;
+        demo.primePct = s.primePct === undefined ? demo.primePct : +s.primePct; return true;
+      }
+    } catch (e) { /* rien d'enregistre */ }
+    return false;
+  }
+  function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function demoReset() { demo.ordre = []; demo.defaut = {}; }
+
+  function renderDemo() {
+    const N = demo.membres.length, prime = demo.cot * demo.primePct / 100;
+    $('d-nom').value = demo.nom; $('hdr-nom').textContent = demo.nom;
+    $('d-cot').value = demo.cot; $('d-prime').value = demo.primePct;
+    $('d-prime_v').textContent = demo.primePct + ' % = ' + f0(prime) + ' FCFA';
+    $('d-count').textContent = '(' + N + ')';
+    $('d-list').innerHTML = demo.membres.map((m, i) => `<span class="chip">${esc(m)}<button data-del="${i}" aria-label="Retirer ${esc(m)}">×</button></span>`).join('') || '<span class="hint">Aucun membre pour l\'instant.</span>';
+    const out = $('d-cycle');
+    if (N < 3) { out.innerHTML = '<div class="note">Ajoutez au moins 3 membres pour lancer un cycle.</div>'; return; }
+    if (demo.ordre.length !== N) { out.innerHTML = '<div class="note">Cliquez sur « Tirer l\'ordre au sort » pour fixer l\'ordre de passage.</div>'; return; }
+    const dflt = demo.ordre.map((m, i) => !!demo.defaut[m] && i < N - 1);
+    const R = K.demoCycle(demo.ordre, dflt, demo.cot, prime);
+    const incompletes = R.rounds.filter(r => r.uncovered > 0).length;
+    let h = '<div class="cards" style="grid-template-columns:repeat(3,1fr)">' +
+      card('Fonds de départ', f0(N * prime) + ' FCFA', `${N} primes de ${f0(prime)} FCFA`) +
+      card('Reste dans le fonds', f0(R.fundLeft) + ' FCFA', R.fundLeft > 0 ? 'rendu à ceux qui ont cotisé jusqu\'au bout' : 'le fonds est épuisé') +
+      card('Pots incomplets', String(incompletes), incompletes ? 'le fonds ne suffit plus' : 'tous les pots sont complets', incompletes ? 'bad' : 'good') + '</div>';
+    h += '<h3 class="subt">Les tours</h3><div class="scroll"><table class="obj"><thead><tr><th>Tour</th><th>Bénéficiaire</th><th>Cotisent</th><th>Manque</th><th>Couvert par le fonds</th><th>Pot reçu</th><th>Fonds restant</th></tr></thead><tbody>';
+    R.rounds.forEach(r => {
+      const cl = r.uncovered > 0 ? 'rowbad' : r.shortfall > 0 ? 'rowwarn' : '';
+      h += `<tr class="${cl}"><td>${r.t}</td><td>${esc(demo.ordre[r.beneficiary])}</td><td>${r.payers} sur ${N}</td><td>${f0(r.shortfall)}</td><td>${f0(r.covered)}</td><td>${f0(r.pot)}</td><td>${f0(r.fund)}</td></tr>`;
+    });
+    h += '</tbody></table></div><h3 class="subt">Les membres</h3><p class="hint">Cochez un membre qui cesse de cotiser après avoir reçu son pot.</p><div class="scroll"><table class="obj"><thead><tr><th>Position</th><th>Membre</th><th>Cesse de cotiser après son tour</th><th>Versé</th><th>Reçu</th><th>Bilan</th></tr></thead><tbody>';
+    demo.ordre.forEach((m, i) => {
+      const bil = R.received[i] - R.paid[i];
+      h += `<tr><td>${i + 1}</td><td>${esc(m)}</td><td style="text-align:center">${i < N - 1 ? `<input type="checkbox" data-def="${esc(m)}"${demo.defaut[m] ? ' checked' : ''}>` : '<span class="hint">sans objet</span>'}</td><td>${f0(R.paid[i])}</td><td>${f0(R.received[i])}</td><td class="${bil >= 0 ? 'pos' : 'neg'}">${bil >= 0 ? '+' : ''}${f0(bil)}</td></tr>`;
+    });
+    out.innerHTML = h + '</tbody></table></div>';
+  }
+
+  function initDemo() {
+    if (!demoLoad()) demo.membres = EXEMPLE.slice();
+    renderDemo();
+    $('d-nom').addEventListener('input', () => { demo.nom = $('d-nom').value || 'Ma tontine'; $('hdr-nom').textContent = demo.nom; demoSave(); });
+    $('d-cot').addEventListener('input', () => { demo.cot = Math.max(100, +$('d-cot').value || 10000); demoSave(); const f = document.activeElement; renderDemo(); if (f && f.id === 'd-cot') { $('d-cot').focus(); } });
+    $('d-prime').addEventListener('input', () => { demo.primePct = +$('d-prime').value; demoSave(); renderDemo(); });
+    const add = () => {
+      const v = $('d-new').value.trim();
+      if (!v || demo.membres.length >= 50 || demo.membres.includes(v)) return;
+      demo.membres.push(v); $('d-new').value = ''; demoReset(); demoSave(); renderDemo(); $('d-new').focus();
+    };
+    $('d-add').addEventListener('click', add);
+    $('d-new').addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+    $('d-list').addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (!b) return; demo.membres.splice(+b.dataset.del, 1); demoReset(); demoSave(); renderDemo(); });
+    $('d-exemple').addEventListener('click', () => { demo.membres = EXEMPLE.slice(); demoReset(); demoSave(); renderDemo(); });
+    $('d-clear').addEventListener('click', () => { demo.membres = []; demoReset(); demoSave(); renderDemo(); });
+    $('d-tirage').addEventListener('click', () => { demo.ordre = shuffle(demo.membres); demo.defaut = {}; renderDemo(); });
+    $('d-hasard').addEventListener('click', () => {
+      const p = Math.min(1, Math.max(0, (+$('d-proba').value || 0) / 100));
+      demo.defaut = {}; demo.ordre.forEach((m, i) => { if (i < demo.ordre.length - 1 && Math.random() < p) demo.defaut[m] = true; }); renderDemo();
+    });
+    $('d-raz').addEventListener('click', () => { demo.defaut = {}; renderDemo(); });
+    $('d-cycle').addEventListener('change', e => { const c = e.target.closest('[data-def]'); if (!c) return; demo.defaut[c.dataset.def] = c.checked; renderDemo(); });
+    $('d-export').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ nom: demo.nom, membres: demo.membres, cot: demo.cot, primePct: demo.primePct }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tontine.json'; a.click();
+    });
+    $('d-import').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const s = JSON.parse(r.result);
+          if (Array.isArray(s.membres)) {
+            demo.nom = s.nom || demo.nom; demo.membres = s.membres.map(String).slice(0, 50); demo.cot = +s.cot || demo.cot;
+            demo.primePct = s.primePct === undefined ? demo.primePct : +s.primePct; demoReset(); demoSave(); renderDemo();
+          }
+        } catch (err) { /* fichier invalide */ }
+      };
+      r.readAsText(f);
+    });
+    $('d-sim').addEventListener('click', () => {
+      const N = Math.min(50, Math.max(5, demo.membres.length));
+      applyState({ N, C: demo.cot, prime: Math.round(demo.cot * demo.primePct / 100), mode: 'prime', sameP: true });
+      switchTab('fonds');
+    });
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
+    ['demo', 'fonds', 'central', 'aide'].forEach(k => { $('tab-' + k).hidden = (k !== name); });
+    if (name === 'central') updateCentral();
+  }
+
+  function init() {
+    ['N', 'p', 'prime', 'alpha', 'pdim'].forEach(b => {
+      const r = $(b + '_r'), n = $(b);
+      r.addEventListener('input', () => { n.value = r.value; update(); });
+      n.addEventListener('input', () => { if (n.value !== '') r.value = n.value; update(); });
+    });
+    $('C').addEventListener('input', update);
+    $('sameP').addEventListener('change', update);
+    document.querySelectorAll('input[name=mode], input[name=rule]').forEach(e => e.addEventListener('change', update));
+    document.querySelectorAll('.preset[data-preset]').forEach(b => b.addEventListener('click', () => applyState(PRESETS[b.dataset.preset])));
+    ['cq', 'cp'].forEach(b => {
+      $(b + '_r').addEventListener('input', () => { $(b).value = $(b + '_r').value; updateCentral(); });
+      $(b).addEventListener('input', () => { if ($(b).value !== '') $(b + '_r').value = $(b).value; updateCentral(); });
+    });
+    ['cN', 'cC'].forEach(id => $(id).addEventListener('input', updateCentral));
+    document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+    if (!loadHash()) update();
+    updateCentral();
+    initDemo();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
+</body>
+</html>
